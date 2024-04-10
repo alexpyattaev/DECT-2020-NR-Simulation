@@ -8,6 +8,7 @@
 function results = main_standalone(matfile)
 verbose = 0;
 params = load(matfile);
+params
 % NEVER run without STO.
 if params.sto_shift == 0
     params.sto_shift = 150

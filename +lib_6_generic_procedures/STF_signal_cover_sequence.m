@@ -1,7 +1,7 @@
 % Apply STF cover sequence to the provided signal (with oversampling)
 function [samples_antenna_tx_with_cover_sequence] = STF_signal_cover_sequence(  samples_antenna_tx, ...
                                                                                 u, ...
-                                                                                b_times_oversampling)
+                                                                                oversampling)
 
     % lookup cover sequence
     c_u = lib_6_generic_procedures.STF_cover_sequence(u);

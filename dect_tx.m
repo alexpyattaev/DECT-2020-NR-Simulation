@@ -33,7 +33,7 @@ classdef dect_tx < handle
             N_TX            = obj.phy_4_5.tm_mode.N_TX;
             N_eff_TX        = obj.phy_4_5.tm_mode.N_eff_TX;
 
-            modulation0     = obj.phy_4_5.mcs.modulation0;
+            modulation     = obj.phy_4_5.mcs.modulation;
 
             N_b_DFT         = obj.phy_4_5.numerology.N_b_DFT;            
             N_b_CP          = obj.phy_4_5.numerology.N_b_CP;
@@ -81,7 +81,7 @@ classdef dect_tx < handle
                                                                             network_id,...
                                                                             PLCF_type,...
                                                                             rv,...
-                                                                            modulation0);
+                                                                            modulation);
                                                                         
             % Next we map PCC and PDC to spatial streams (ss), see Table 6.3.2-1.
             % For PCC, there is only one spatial stream.
