@@ -1,2 +1,5 @@
 miscellaneous/
 results/
+*.asv
+*.mat
+__pycache__

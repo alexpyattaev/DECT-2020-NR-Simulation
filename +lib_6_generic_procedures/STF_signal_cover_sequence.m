@@ -1,18 +1,14 @@
+% Apply STF cover sequence to the provided signal (with oversampling)
 function [samples_antenna_tx_with_cover_sequence] = STF_signal_cover_sequence(  samples_antenna_tx, ...
                                                                                 u, ...
                                                                                 b_times_oversampling)
 
     % lookup cover sequence
-    if u==1
-        c_u = [1; -1; 1; 1; -1; -1; -1];
-        %c_u = ones(7,1);
-    else
-        c_u = [1; -1; 1; 1; -1; -1; -1; -1; -1];
-        %c_u = ones(9,1);
-    end
+    c_u = lib_6_generic_procedures.STF_cover_sequence(u);
 
     % every pattern has a length of 16 samples, on top we put the oversampling
-    c_u_16_os = repelem(c_u, 16*b_times_oversampling);
+    c_u_16_os = repelem(c_u, 16*oversampling);
+
 
     % size of STF
     N_TX = size(samples_antenna_tx, 2);
@@ -25,3 +21,4 @@ function [samples_antenna_tx_with_cover_sequence] = STF_signal_cover_sequence(  
         samples_antenna_tx_with_cover_sequence(1:n_STF_samples_os, i) = samples_antenna_tx(1:n_STF_samples_os, i).*c_u_16_os;
     end
 end
+

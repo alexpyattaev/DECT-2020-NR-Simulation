@@ -18,7 +18,7 @@
 %            {14×1 double}    {[0]}    {14×1 double}
 %
 %
-function [physical_resource_mapping_STF_cell] = STF(numerology, k_b_OCC, N_eff_TX, b)
+function [physical_resource_mapping_STF_cell] = STF(numerology, k_b_OCC, N_eff_TX, b, stf_version)
 
     % Technical Specification assumes first index is 0, matlab 1
     MATLAB_INDEX_SHIFT = 1;
@@ -45,6 +45,38 @@ function [physical_resource_mapping_STF_cell] = STF(numerology, k_b_OCC, N_eff_T
     physical_resource_mapping_STF_cell(1,1) = {k_i};
     physical_resource_mapping_STF_cell(1,2) = {0};
     
+    % <modified>
+    
+    % shwitch between base and update sequences
+    % stf_mode = 0 - legacy STF 2020
+    % stf_mode = 1 - current STF as of 2023
+    switch stf_version
+        case 0
+        y_0_b1 = [-1i, -1i, -1, -1, 1i, -1i, 1i,...
+                  -1i, -1i, 1i, 1i, -1, -1i, -1];
+        y_0_b2 = [1,-1,1,1,1,-1,1,1,1,1,-1,-1,1,-1,1,1,1,-1,1,1,-1,1,1,1,1,-1,1,-1];
+        y_0_b4 = [y_0_b2, y_0_b2];
+        y_0_b8 = [y_0_b4, y_0_b4];
+        y_0_b12 = [y_0_b4, y_0_b4, y_0_b4];
+        y_0_b16 = [y_0_b8, y_0_b8];
+        case 1
+        y_0_b1 = exp(1i*pi/4) * [1, -1,1,1, -1,1,1, -1,1,1,1, -1, -1, -1];
+        y_0_b2 = exp(1i*pi/4) * [-1,1, -1,1,1, -1,1,1, -1,1,1,1, -1,1, -1, -1, -1,1, -1, -1, -1,1,1,1, -1, -1, -1, -1];
+        y_0_b4 = exp(1i*pi/4) * [-1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1,...
+            1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1];
+    
+        y_0_b4_r = (2*mod(1:numel(y_0_b4),2) - 1) .* fliplr(y_0_b4);
+        y_0_b8 = [y_0_b4 y_0_b4_r];
+    
+        y_0_b8_r = (2*mod(1:numel(y_0_b8),2) - 1) .* fliplr(y_0_b8);
+        y_0_b16 = [y_0_b8 y_0_b8_r];
+    
+        i = (0:1: (12*14-1));
+        y_0_b12 = y_0_b16(i + 2*14 + MATLAB_INDEX_SHIFT);
+        otherwise
+            error('Unsupported STF version, only 0 or 1 are allowed')
+    end
+    
     % base sequences
 %     y_0_b1 = [-1i, -1i, -1, -1, 1i, -1i, 1i,...
 %               -1i, -1i, 1i, 1i, -1, -1i, -1];
@@ -55,19 +87,21 @@ function [physical_resource_mapping_STF_cell] = STF(numerology, k_b_OCC, N_eff_T
 %     y_0_b16 = [y_0_b8, y_0_b8];
 
     % base sequences update from ETSI TS 103 636-3 V1.4.1 (2023-01)
-    y_0_b1 = exp(1i*pi/4) * [1, -1,1,1, -1,1,1, -1,1,1,1, -1, -1, -1];
-    y_0_b2 = exp(1i*pi/4) * [-1,1, -1,1,1, -1,1,1, -1,1,1,1, -1,1, -1, -1, -1,1, -1, -1, -1,1,1,1, -1, -1, -1, -1];
-    y_0_b4 = exp(1i*pi/4) * [-1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1,...
-        1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1];
+%     y_0_b1 = exp(1i*pi/4) * [1, -1,1,1, -1,1,1, -1,1,1,1, -1, -1, -1];
+%     y_0_b2 = exp(1i*pi/4) * [-1,1, -1,1,1, -1,1,1, -1,1,1,1, -1,1, -1, -1, -1,1, -1, -1, -1,1,1,1, -1, -1, -1, -1];
+%     y_0_b4 = exp(1i*pi/4) * [-1, -1, -1, 1, -1, 1, -1, -1, 1, 1, 1, 1, -1, 1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1,...
+%         1, 1, 1, -1, 1, -1, 1, 1, -1, -1, -1, -1, 1, -1, -1, -1, -1, 1, -1, 1, 1, -1, -1, -1, -1, -1, 1, -1];
+% 
+%     y_0_b4_r = (2*mod(1:numel(y_0_b4),2) - 1) .* fliplr(y_0_b4);
+%     y_0_b8 = [y_0_b4 y_0_b4_r];
+% 
+%     y_0_b8_r = (2*mod(1:numel(y_0_b8),2) - 1) .* fliplr(y_0_b8);
+%     y_0_b16 = [y_0_b8 y_0_b8_r];
+% 
+%     i = (0:1: (12*14-1));
+%     y_0_b12 = y_0_b16(i + 2*14 + MATLAB_INDEX_SHIFT);
 
-    y_0_b4_r = (2*mod(1:numel(y_0_b4),2) - 1) .* fliplr(y_0_b4);
-    y_0_b8 = [y_0_b4 y_0_b4_r];
-
-    y_0_b8_r = (2*mod(1:numel(y_0_b8),2) - 1) .* fliplr(y_0_b8);
-    y_0_b16 = [y_0_b8 y_0_b8_r];
-
-    i = (0:1: (12*14-1));
-    y_0_b12 = y_0_b16(i + 2*14 + MATLAB_INDEX_SHIFT);
+    % </modified>
     
     % synchronization training data symbols
     % NOTE: cyclic rotation depending on the number of effective antennas is already included

@@ -1,3 +1,5 @@
+% u is actually greek mu in the spec.
+% b is actually greek Beta in the spec
 function [numerology] = numerologies(u, b)
 
     if ~ismember(u,[1, 2, 4, 8])

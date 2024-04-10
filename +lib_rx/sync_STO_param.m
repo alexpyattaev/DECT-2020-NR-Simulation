@@ -29,10 +29,10 @@ function [sto_config] = sync_STO_param(u, b, oversampling)
     sto_config.minimum_power_threshold      = 0.001;
 
     sto_config.threshold.step               = 8*b*oversampling;
-    sto_config.threshold.value              = 0.15; % 0.5;
+    sto_config.threshold.value              = 0.15;
 
     sto_config.coarse_peak.search_length    = 1.75*n_samples_coarse_metric_first_half_no_noise;
-    sto_config.coarse_peak.step             = 1;
+    sto_config.coarse_peak.step             = 1;% TODO: why would this ever be less than 1?
     sto_config.coarse_peak.threshold        = 0.15;
     sto_config.coarse_peak.movmean          = [3*b*oversampling 3*b*oversampling];
 

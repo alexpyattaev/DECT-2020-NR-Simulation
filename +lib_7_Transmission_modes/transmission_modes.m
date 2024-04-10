@@ -1,4 +1,9 @@
 function [t_modes] = transmission_modes(tm_mode_0_to_11)
+% Table 7.2-1: Transmission modes and transmission mode signalling.
+% CL - Closed Loop (True/False) 
+% BF - Beamformed (True/False)
+% N_TS-Number of streams
+% N_TX - Number of antenna ports
 
     switch tm_mode_0_to_11
         case 0

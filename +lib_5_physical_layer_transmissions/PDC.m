@@ -24,7 +24,7 @@
 %            {56×1 double}    {56×1 double}    {56×1 double}    {42×1 double}    {56×1 double}    {56×1 double}    {1×6 double}    {322×1 double}
 %
 %
-function [physical_resource_mapping_PDC_cell, N_PDC_subc] = PDC(u, numerology, k_b_OCC, N_PACKET_symb, N_TS, N_eff_TX,...
+function [physical_resource_mapping_PDC_cell, N_PDC_REs] = PDC(u, numerology, k_b_OCC, N_PACKET_symb, N_TS, N_eff_TX,...
                                                                 physical_resource_mapping_STF_cell,...
                                                                 physical_resource_mapping_DRS_cell,...
                                                                 physical_resource_mapping_PCC_cell)
@@ -36,7 +36,7 @@ function [physical_resource_mapping_PDC_cell, N_PDC_subc] = PDC(u, numerology, k
     N_b_DFT = numerology.N_b_DFT;
     N_b_OCC = numerology.N_b_OCC;
 
-    [~, mat_STF_DRS_PCC_all_streams] = lib_util.matrix_STF_DRS_PCC_PDC(N_b_DFT, N_PACKET_symb, N_TS, [],...
+    [~, mat_STF_DRS_PCC_all_streams] = trx_common.matrix_STF_DRS_PCC_PDC(N_b_DFT, N_PACKET_symb, N_TS, [],...
                                                                         physical_resource_mapping_STF_cell,...
                                                                         physical_resource_mapping_DRS_cell,...
                                                                         physical_resource_mapping_PCC_cell,...
@@ -76,12 +76,12 @@ function [physical_resource_mapping_PDC_cell, N_PDC_subc] = PDC(u, numerology, k
         nof_OFDM_symbols_carying_DRS = nof_OFDM_symbols_carying_DRS + 1;
     end
 
-    N_DRS_subc = N_eff_TX * N_b_OCC/4 * nof_OFDM_symbols_carying_DRS;
+    N_DRS_REs = N_eff_TX * N_b_OCC/4 * nof_OFDM_symbols_carying_DRS;
     
     % according to 5.2.4
-    N_PCC_subc = 98;
+    N_PCC_REs = 98;
     
-    N_PDC_subc = N_DF_symb * N_b_OCC - N_DRS_subc - N_PCC_subc;
+    N_PDC_REs = N_DF_symb * N_b_OCC - N_DRS_REs - N_PCC_REs;
 
     %% extract subcarrier and symbol index for PDC
     

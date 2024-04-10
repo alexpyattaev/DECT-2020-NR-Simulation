@@ -1,4 +1,5 @@
-function [samples_antenna_sto_cfo, cfo_report] = sync_CFO_fractional(verbose, samples_antenna_sto, n_STF_template, u, cfo_config)
+function [samples_antenna_sto_cfo, cfo_report] = sync_CFO_fractional(verbose, samples_antenna_sto, n_STF_template, u, cfo_config, stf_cover_sec_enable)
+
 
     % SOURCES
     % Schmidl Cox: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=650240
@@ -13,14 +14,18 @@ function [samples_antenna_sto_cfo, cfo_report] = sync_CFO_fractional(verbose, sa
             L = 9;
     end
 
-    assert(mod(n_STF_template, L*16) == 0, 'oversampling not an integer value');
-
-    % n_STF_template is the oversampled length of the STF, by dividing with L*16 we get the oversampling itself
-    oversampling = n_STF_template / (L*16);
-
-    % revert STF cover sequence by applying it
-    samples_antenna_sto = lib_6_generic_procedures.STF_signal_cover_sequence(samples_antenna_sto, u, oversampling);
     
+    % lookup cover sequence
+    c_u = lib_6_generic_procedures.STF_cover_sequence(u);
+    
+
+   %TODO - properly fix this ASAP, original algo was different here 
+   % n_STF_template is the oversampled length of the STF, by dividing with L*16 we get the oversampling itself
+   % oversampling = n_STF_template / (L*16);
+    % revert STF cover sequence by applying it
+    % samples_antenna_sto = lib_6_generic_procedures.STF_signal_cover_sequence(samples_antenna_sto, u, oversampling);    
+
+
     % number of samples in a single pattern repetition
     n_STF_pattern = n_STF_template/L;
     
@@ -51,6 +56,14 @@ function [samples_antenna_sto_cfo, cfo_report] = sync_CFO_fractional(verbose, sa
 
         % reorder to repeated patterns
         STF_found_mat = reshape(STF_found, n_STF_pattern, L);
+
+        % <modified>
+        if stf_cover_sec_enable 
+            for k = 1:L
+                STF_found_mat(:,k) = STF_found_mat(:,k).*c_u(k);
+            end
+        end
+        % </modified>
         
         % equation (5)
         P = STF_found_mat(:,2:end).*conj(STF_found_mat(:,1:end-1));

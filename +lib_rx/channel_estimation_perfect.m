@@ -5,7 +5,7 @@ function [ch_estim] = channel_estimation_perfect(antenna_streams_mapped_rev, N_R
 
     % output
     ch_estim = cell(N_RX,1);
-    
+    %TODO FIX THIS
     % AWGN
     if strcmp(ch_handle_.type,'awgn') == true
         

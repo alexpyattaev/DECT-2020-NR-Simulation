@@ -68,7 +68,7 @@ classdef dect_rx < handle
             verbose_            = obj.verbose;
             tx_handle_          = obj.tx_handle;
             ch_handle_          = obj.ch_handle;
-            STF_templates_      = obj.STF_templates;
+       
             harq_buf_40_        = obj.harq_buf_40;
             harq_buf_80_        = obj.harq_buf_80;
             harq_buf_           = obj.harq_buf;
@@ -77,7 +77,7 @@ classdef dect_rx < handle
             mode_0_to_1         = obj.phy_4_5.tm_mode.mode_0_to_1;
             N_eff_TX            = obj.phy_4_5.tm_mode.N_eff_TX;
 
-            modulation0         = obj.phy_4_5.mcs.modulation0;
+            modulation0         = obj.phy_4_5.mcs.modulation;
 
             N_b_DFT             = obj.phy_4_5.numerology.N_b_DFT;            
             N_b_CP              = obj.phy_4_5.numerology.N_b_CP;
@@ -94,7 +94,7 @@ classdef dect_rx < handle
             PLCF_type           = obj.mac_meta.PLCF_type;
             rv                  = obj.mac_meta.rv;
             N_RX                = obj.mac_meta.N_RX;
-            oversampling        = obj.mac_meta.oversampling;
+            
 
             synchronization     = obj.mac_meta.synchronization;
 
@@ -107,6 +107,8 @@ classdef dect_rx < handle
             physical_resource_mapping_STF_cell = obj.phy_4_5.physical_resource_mapping_STF_cell;
             physical_resource_mapping_DRS_cell = obj.phy_4_5.physical_resource_mapping_DRS_cell;
 
+            
+
             %% sync of STO + CFO and extraction of N_eff_TX into STO_CFO_report
             if synchronization.stf.active == true
 
@@ -117,11 +119,13 @@ classdef dect_rx < handle
                                                                                 u,...
                                                                                 N_b_DFT,...
                                                                                 samples_antenna_rx,...
-                                                                                STF_templates_,...
+                                                                                obj.STF_templates,...
                                                                                 n_packet_samples,...
-                                                                                oversampling,...
+                                                                                obj.mac_meta.oversampling,...
                                                                                 synchronization.stf.sto_config,...
-                                                                                synchronization.stf.cfo_config);
+                                                                                synchronization.stf.cfo_config,...
+                                                                                obj.mac_meta.stf_version,...
+                                                                                obj.mac_meta.stf_cover_sec_enable);
 
                 obj.packet_data.STO_CFO_report = STO_CFO_report;
             else
@@ -141,7 +145,7 @@ classdef dect_rx < handle
                                                                                                                             N_b_DFT,...
                                                                                                                             u,...
                                                                                                                             N_b_CP,...
-                                                                                                                            oversampling);
+                                                                                                                            obj.mac_meta.oversampling);
                                                                                                                     
             %% PCC decoding and packet data extraction
             % Decode PCC and extract all relevant data about the packet.
@@ -228,6 +232,7 @@ classdef dect_rx < handle
                     end
 
                     % MIMO modes with more than one spatial stream
+                    error("MIMO modes with more than one spatial stream are not implemented")
                     % TODO
                 end
                 

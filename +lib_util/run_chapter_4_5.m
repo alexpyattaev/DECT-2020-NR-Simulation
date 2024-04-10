@@ -1,6 +1,7 @@
 function [phy_4_5] = run_chapter_4_5(verbose, mac_meta)
 
-    % This function is called in the constructor. It basically does all the calculations of chapter 4 and 5.
+    % This function is called in the constructor of TX and RX objects.
+    % It basically does all the calculations of chapter 4 and 5.
     % All data is saved in the structure phy_4_5.
 
     %% for the purpose of readability, extract all variables that are required from mac_meta
@@ -33,7 +34,7 @@ function [phy_4_5] = run_chapter_4_5(verbose, mac_meta)
     N_PACKET_symb = lib_5_physical_layer_transmissions.Transmission_packet_structure(numerology, PacketLengthType, PacketLength, tm_mode.N_eff_TX, u);
 
     % 5.2.2
-    [physical_resource_mapping_STF_cell] = lib_5_physical_layer_transmissions.STF(numerology, k_b_OCC, tm_mode.N_eff_TX, b);
+    [physical_resource_mapping_STF_cell] = lib_5_physical_layer_transmissions.STF(numerology, k_b_OCC, tm_mode.N_eff_TX, b,  mac_meta.stf_version);
 
     % 5.2.3
     [physical_resource_mapping_DRS_cell] = lib_5_physical_layer_transmissions.DRS(numerology, k_b_OCC, tm_mode.N_TS, tm_mode.N_eff_TX, N_PACKET_symb, b);
@@ -44,13 +45,13 @@ function [phy_4_5] = run_chapter_4_5(verbose, mac_meta)
                                                                                     physical_resource_mapping_DRS_cell);
 
     % 5.2.5
-    [physical_resource_mapping_PDC_cell, N_PDC_subc] = lib_5_physical_layer_transmissions.PDC(u, numerology, k_b_OCC, N_PACKET_symb, tm_mode.N_TS, tm_mode.N_eff_TX,...
+    [physical_resource_mapping_PDC_cell, N_PDC_REs] = lib_5_physical_layer_transmissions.PDC(u, numerology, k_b_OCC, N_PACKET_symb, tm_mode.N_TS, tm_mode.N_eff_TX,...
                                                                                                 physical_resource_mapping_STF_cell,...
                                                                                                 physical_resource_mapping_DRS_cell,...
                                                                                                 physical_resource_mapping_PCC_cell);
 
     % 5.3
-    N_TB_bits = lib_5_physical_layer_transmissions.Transport_block_size(tm_mode, mcs, N_PDC_subc, Z);
+    N_TB_bits = lib_5_physical_layer_transmissions.Transport_block_size(tm_mode, mcs, N_PDC_REs, Z);
 
     % save data in structure
     phy_4_5.tm_mode                             = tm_mode;
@@ -65,13 +66,13 @@ function [phy_4_5] = run_chapter_4_5(verbose, mac_meta)
     phy_4_5.physical_resource_mapping_DRS_cell  = physical_resource_mapping_DRS_cell;
     phy_4_5.physical_resource_mapping_PCC_cell  = physical_resource_mapping_PCC_cell;
     phy_4_5.physical_resource_mapping_PDC_cell  = physical_resource_mapping_PDC_cell;
-    phy_4_5.N_PDC_subc                          = N_PDC_subc;
+    phy_4_5.N_PDC_subc                          = N_PDC_REs;
     phy_4_5.N_TB_bits                           = N_TB_bits;
 
     % custom values, all starting with n_
 
     % how many gross bits can we transmit?
-    phy_4_5.n_total_bits                        = tm_mode.N_SS*N_PDC_subc*mcs.N_bps;
+    phy_4_5.n_total_bits                        = tm_mode.N_SS*N_PDC_REs*mcs.N_bps;
 
     % what percentage of the spectrum do we occupy?
     phy_4_5.n_spectrum_occupied                 = numel(k_b_OCC)/numerology.N_b_DFT;

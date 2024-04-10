@@ -3,7 +3,7 @@ classdef dect_tx < handle
     properties
         verbose;        % show data during execution: 0 false, 1 only text, 2 text + plots
         mac_meta;       % data received from MAC layer
-        phy_4_5;        % data from chapter 4 and 5
+        phy_4_5;        % data from chapter 4 and 5 (from trx_prep_chapter_4_5)
         
         packet_data;    % results during packet generation
     end
@@ -42,17 +42,16 @@ classdef dect_tx < handle
             k_b_OCC         = obj.phy_4_5.k_b_OCC;
             n_STF_samples   = obj.phy_4_5.n_STF_samples;
             
-            n_total_bits        = obj.phy_4_5.n_total_bits;
+          
             n_spectrum_occupied = obj.phy_4_5.n_spectrum_occupied;
 
-            b                   = obj.mac_meta.b;
-            u                   = obj.mac_meta.u;
-            Z                   = obj.mac_meta.Z;
+           
+           
             codebook_index      = obj.mac_meta.codebook_index;
             network_id          = obj.mac_meta.network_id;
             PLCF_type           = obj.mac_meta.PLCF_type;
             rv                  = obj.mac_meta.rv;
-            oversampling        = obj.mac_meta.oversampling;
+            
 
             physical_resource_mapping_PCC_cell = obj.phy_4_5.physical_resource_mapping_PCC_cell;
             physical_resource_mapping_PDC_cell = obj.phy_4_5.physical_resource_mapping_PDC_cell;
@@ -77,8 +76,8 @@ classdef dect_tx < handle
             % pcc_enc_dbg and pdc_enc_dbg contain debugging information            
             [x_PCC, pcc_enc_dbg] = lib_7_Transmission_modes.PCC_encoding(PCC_user_bits, CL, precoding_identity_matrix);
             [x_PDC, pdc_enc_dbg] = lib_7_Transmission_modes.PDC_encoding(PDC_user_bits,...
-                                                                            n_total_bits,...
-                                                                            Z,...
+                                                                            obj.phy_4_5.n_total_bits,...
+                                                                            obj.mac_meta.Z,...
                                                                             network_id,...
                                                                             PLCF_type,...
                                                                             rv,...
@@ -116,10 +115,14 @@ classdef dect_tx < handle
             end
             
             % we then map STF, DRS, PCC and PDC into those transmit stream matrices
-            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_STF(transmit_streams, physical_resource_mapping_STF_cell);
-            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_DRS(transmit_streams, physical_resource_mapping_DRS_cell);            
-            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_PCC(transmit_streams, physical_resource_mapping_PCC_cell, y_PCC_ts);
-            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_PDC(transmit_streams, physical_resource_mapping_PDC_cell, y_PDC_ts);
+            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_STF(transmit_streams, ...
+                physical_resource_mapping_STF_cell);
+            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_DRS(transmit_streams, ...
+                physical_resource_mapping_DRS_cell);            
+            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_PCC(transmit_streams, ...
+                physical_resource_mapping_PCC_cell, y_PCC_ts);
+            transmit_streams = lib_7_Transmission_modes.subcarrier_mapping_PDC(transmit_streams, ...
+                physical_resource_mapping_PDC_cell, y_PDC_ts);
             
             % Beamforming (N_eff_TX many), remember N_eff_TX = N_TS
             antenna_streams_mapped = lib_6_generic_procedures.Beamforming(transmit_streams, N_TX, codebook_index);
@@ -131,12 +134,15 @@ classdef dect_tx < handle
                                                                                                             N_TX,...
                                                                                                             N_eff_TX,...
                                                                                                             N_b_DFT,...
-                                                                                                            u,...
+                                                                                                            obj.mac_meta.u,...
                                                                                                             N_b_CP,...
-                                                                                                            oversampling);
-
+                                                                                                            obj.mac_meta.oversampling);
+           if obj.mac_meta.stf_cover_sec_enable
             % apply STF cover sequence
-            samples_antenna_tx = lib_6_generic_procedures.STF_signal_cover_sequence(samples_antenna_tx, u, b*oversampling);
+            samples_antenna_tx = lib_6_generic_procedures.STF_signal_cover_sequence(samples_antenna_tx, ...
+                obj.mac_meta.u, ...
+                obj.mac_meta.oversampling);
+           end;
 
             %% save packet data for debugging
             obj.packet_data.x_PCC = x_PCC;
@@ -166,7 +172,7 @@ classdef dect_tx < handle
             % debugging
             if verbose_ > 1
                 lib_dbg.plot_resource_mapping_before_antenna(antenna_streams_mapped);
-                lib_dbg.plot_STF(samples_antenna_tx, u, N_b_DFT, oversampling);
+                lib_dbg.plot_STF(samples_antenna_tx, obj.mac_meta.u, N_b_DFT, obj.mac_meta.oversampling);
             end
         end
     end

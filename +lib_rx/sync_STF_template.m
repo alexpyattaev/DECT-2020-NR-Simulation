@@ -9,7 +9,7 @@ function [STF_templates] = sync_STF_template(mac_meta_tx)
     STF_templates.time_domain = cell(4,1);
     STF_templates.freq_domain = cell(4,1);
 
-    %% to generate the STF templates, we habe to put the transmitter into a specific mode
+    %% to generate the STF templates, we have to put the transmitter into a specific mode
     mac_meta_tx.PacketLengthType = 0;  % subslots
     mac_meta_tx.PacketLength = 4;      % for some tx modes (with N_eff_TX >= 4) we need at least 20 OFDM symbols
     mac_meta_tx.BF = false;            % disable beamforming

@@ -1,13 +1,10 @@
-function [N_TB_bits] = Transport_block_size(tm_mode, mcs, N_PDC_subc, Z)
+function [N_TB_bits] = Transport_block_size(tm_mode, mcs, N_PDC_REs, Z)
 
     % copy all relevant variables
-    N_SS = tm_mode.N_SS;
-    N_bps = mcs.N_bps;
-    R_t = mcs.R_t;
-    R_b = mcs.R_b;
+    N_bps = mcs.N_bps;  
     
     %% 5.3
-    N_PDC_bits = floor(N_SS * N_PDC_subc * N_bps * R_t / R_b);
+    N_PDC_bits = floor(tm_mode.N_SS * N_PDC_REs * N_bps * mcs.R_t / mcs.R_b);
     
     L = 24;
     
