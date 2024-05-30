@@ -57,7 +57,6 @@ function [mcs] = modulation_and_coding_scheme(MCS_index)
             R_t = 3;
             R_b = 4;
         case 11
-            
             modulation = '1024QAM';
             N_bps = 10;
             R_t = 5;

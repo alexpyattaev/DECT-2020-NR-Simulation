@@ -78,8 +78,6 @@ classdef rf_channel < handle
                         
             obj.sto                   = [];
             obj.cfo                   = [];
-
-           
             
             obj.samples_antenna_rx_no_noise = [];
             obj.samples_antenna_rx_only_noise = [];

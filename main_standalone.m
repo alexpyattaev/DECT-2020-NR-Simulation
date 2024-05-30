@@ -65,8 +65,7 @@ mac_meta_tx.codebook_index = 0;                     % 6.3.4, any value other tha
 
 %Modulation and coding
 mac_meta_tx.mcs_index = params.mcs_index;                  % Table A-1 in part 3, values range from 0 to 11
-mac_meta_tx.Z = 6144;                               % 5.3 -> so far only Z=6144 fully supported, 2048 only at TX, RX missing (Matlab has no option for Z=2048 in LTE toolbox)
-% Z is turbo coder block size. Spec allows also for 2048. 
+mac_meta_tx.Z = 2048;
 
 % Details of how channel modeling works
 % The oversampling setup is broken HARD, setting this to anything but 2
@@ -74,7 +73,6 @@ mac_meta_tx.Z = 6144;                               % 5.3 -> so far only Z=6144 
 mac_meta_tx.oversampling = 2;                    	% By how much do we oversample our ofdm packet compared to critical sampling (insert zeros at specturm edges before IFFT)?
 
 mac_meta_tx.PLCF_type = 2;                          % Type 1 is 40 bits, Type 2 is 80 bits
-%TODO: WTF IS PLCF???
 
 mac_meta_tx.rv = 0;                                 % HARQ version, values range from 0, 1, 2 to 3 (right HARQ retransmission order is 0 2 3 1)
 mac_meta_tx.network_id = de2bi(1e6,32,'left-msb');  % 7.6.6 must be given as a 32 bit vector with network_id(1) being the MSB, network_id must be known for scrambler on PHY
@@ -82,10 +80,10 @@ mac_meta_tx.stf_version = params.stf_seq_version;        % STF switch between ba
 mac_meta_tx.stf_cover_sec_enable = params.stf_cover_sec_enable;  % 1 if cover sequence should be enabled
 
 
-% temporary restrictions
-if mac_meta_tx.Z ~= 6144
-    error('Z must be 6144.');
-end    
+% % temporary restrictions
+% if mac_meta_tx.Z ~= 6144
+%     error('Z must be 6144.');
+% end
     
 % create tx
 %verbose = 5;

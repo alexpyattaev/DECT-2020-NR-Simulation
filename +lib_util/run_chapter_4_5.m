@@ -50,8 +50,8 @@ function [phy_4_5] = run_chapter_4_5(verbose, mac_meta)
                                                                                                 physical_resource_mapping_DRS_cell,...
                                                                                                 physical_resource_mapping_PCC_cell);
 
-    % 5.3
-    N_TB_bits = lib_5_physical_layer_transmissions.Transport_block_size(tm_mode, mcs, N_PDC_REs, Z);
+    % 5.3 - compute number of bits in transport block and number of code blocks
+    [N_TB_bits, N_CB] = lib_5_physical_layer_transmissions.Transport_block_size(tm_mode, mcs, N_PDC_REs, Z);
 
     % save data in structure
     phy_4_5.tm_mode                             = tm_mode;
@@ -68,10 +68,11 @@ function [phy_4_5] = run_chapter_4_5(verbose, mac_meta)
     phy_4_5.physical_resource_mapping_PDC_cell  = physical_resource_mapping_PDC_cell;
     phy_4_5.N_PDC_subc                          = N_PDC_REs;
     phy_4_5.N_TB_bits                           = N_TB_bits;
+    phy_4_5.N_CB = N_CB;
 
     % custom values, all starting with n_
 
-    % how many gross bits can we transmit?
+    % how many gross (uncoded) bits can we transmit?
     phy_4_5.n_total_bits                        = tm_mode.N_SS*N_PDC_REs*mcs.N_bps;
 
     % what percentage of the spectrum do we occupy?

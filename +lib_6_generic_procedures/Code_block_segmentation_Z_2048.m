@@ -46,7 +46,7 @@ function [c_r] = Code_block_segmentation_Z_2048(b)
         end
     end
 
-    F = C_plus*K_plus + C_minus*K_minus - B_prime;
+    F = C_plus * K_plus + C_minus * K_minus - B_prime;
     
     % sanity check
     if F ~= 0
