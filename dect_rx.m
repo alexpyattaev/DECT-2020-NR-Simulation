@@ -20,6 +20,16 @@ classdef dect_rx < handle
     
     methods
         function obj = dect_rx(verbose_arg, mac_meta_arg)
+            % if channel estimation type is not specifically defined, use Wiener as a default
+            if ~isfield(mac_meta_arg, 'active_ch_estim_type')
+                mac_meta_arg.active_ch_estim_type = 'wiener';
+            end
+
+            % if equalization/detection is not specifically turned off, activate if by default
+            if ~isfield(mac_meta_arg, 'active_equalization_detection')
+                mac_meta_arg.active_equalization_detection = true;
+            end
+
             obj.verbose = verbose_arg;
             obj.mac_meta = mac_meta_arg;
             obj.phy_4_5 = lib_util.run_chapter_4_5(verbose_arg, mac_meta_arg);
@@ -29,7 +39,7 @@ classdef dect_rx < handle
             obj.tx_handle = [];
             obj.ch_handle = [];
 
-            % we only load the templates if they are needed
+            % we only load STF templates if they are needed
             if mac_meta_arg.synchronization.stf.active == true
                 obj.STF_templates = lib_rx.sync_STF_template(mac_meta_arg);
             end
@@ -49,7 +59,12 @@ classdef dect_rx < handle
         % For noise, the best case value is assumed, for delay and Doppler spread the worst case value.
         % To improve performance, different sets should be precalculated for different SNRs.
         function [] = overwrite_wiener(obj, noise_estim, f_d_hertz, tau_rms_sec)
+            % We estimate the channel for each subcarrier based on the closest DRS pilots in time and frequency.
+            % This value defines how many of the closest DRS pilots we consider. Ideally, this value should depend on the SNR. 
+            N_closest_DRS_pilots = 8;
+
             obj.wiener = lib_rx.channel_estimation_wiener_weights(  obj.phy_4_5.physical_resource_mapping_DRS_cell,...
+                                                                    N_closest_DRS_pilots,...
                                                                     obj.phy_4_5.numerology.N_b_DFT,...
                                                                     obj.phy_4_5.N_PACKET_symb,...
                                                                     obj.phy_4_5.numerology.N_b_CP, ...
@@ -74,7 +89,7 @@ classdef dect_rx < handle
             harq_buf_           = obj.harq_buf;
             wiener_             = obj.wiener;
         
-            mode_0_to_1         = obj.phy_4_5.tm_mode.mode_0_to_1;
+            mode_0_to_11        = obj.phy_4_5.tm_mode.mode_0_to_11;
             N_eff_TX            = obj.phy_4_5.tm_mode.N_eff_TX;
 
             
@@ -106,8 +121,6 @@ classdef dect_rx < handle
             physical_resource_mapping_PDC_cell = obj.phy_4_5.physical_resource_mapping_PDC_cell;
             physical_resource_mapping_STF_cell = obj.phy_4_5.physical_resource_mapping_STF_cell;
             physical_resource_mapping_DRS_cell = obj.phy_4_5.physical_resource_mapping_DRS_cell;
-
-            
 
             %% sync of STO + CFO and extraction of N_eff_TX into STO_CFO_report
             if synchronization.stf.active == true
@@ -170,26 +183,10 @@ classdef dect_rx < handle
             % Now that we know the length of the packet from the PCC, we can determine a channel estimate.
             % Output is a cell(N_RX,1), each cell with a matrix of size N_b_DFT x N_PACKET_symb x N_TX.
             % For subcarriers which are unused the channel estimate can be NaN or +/- infinity.
-            if strcmp(active_ch_estim_type,'perfect') == true
+            if strcmp(active_ch_estim_type,'wiener') == true
 
-                % only for AWGN OR rayleigh/rician with doppler frequency of 0 and flat fading
-                ch_estim = lib_rx.channel_estimation_perfect(antenna_streams_mapped_rev, N_RX, N_eff_TX, ch_handle_);
-
-            elseif strcmp(active_ch_estim_type,'perfect SIMO') == true
-                
-                % this is a cheap trick: we take the time domain samples without noise, FFT and take the effective channel ceofficients as a channel estimate
-                antenna_streams_mapped_rev_no_noise = lib_6_generic_procedures.ofdm_signal_generation_Cyclic_prefix_insertion_rev(  ...
-                    ch_handle_.samples_antenna_rx_no_noise,...
-                    k_b_OCC,...
-                    N_PACKET_symb,...
-                    N_RX,...
-                    N_eff_TX,...
-                    N_b_DFT,...
-                    u,...
-                    N_b_CP,...
-                    oversampling);
-
-                ch_estim = lib_rx.channel_estimation_perfect_SIMO(antenna_streams_mapped_rev_no_noise, N_RX, N_eff_TX, tx_handle_);
+                % real world channel estimation based on precalculated wiener filter coefficients assuming worst-case channel conditions
+                ch_estim = lib_rx.channel_estimation_wiener(antenna_streams_mapped_rev, physical_resource_mapping_DRS_cell, wiener_, N_RX, N_eff_TX);
 
             elseif strcmp(active_ch_estim_type,'least squares') == true
 
@@ -198,10 +195,6 @@ classdef dect_rx < handle
                 % The error floor is comes from only considering the closest neighbours.
                 ch_estim = lib_rx.channel_estimation_ls(antenna_streams_mapped_rev, physical_resource_mapping_STF_cell, physical_resource_mapping_DRS_cell, N_RX, N_eff_TX);
 
-            elseif strcmp(active_ch_estim_type,'wiener') == true
-
-                % real world channel estimation based on precalculated wiener filter coefficients assuming worst-case channel conditions
-                ch_estim = lib_rx.channel_estimation_wiener(antenna_streams_mapped_rev, physical_resource_mapping_DRS_cell, wiener_, N_RX, N_eff_TX);
 
             else
                 error('Unknown channel estimation type %s.', active_ch_estim_type);
@@ -229,19 +222,16 @@ classdef dect_rx < handle
                     x_PDC_rev = lib_rx.equalization_SIMO_mrc(antenna_streams_mapped_rev, ...
                         ch_estim, physical_resource_mapping_PDC_cell, N_RX);
 
-                % MISO (Alamouti) and MIMO (Alamouti + MRC)
+                % MISO (Alamouti) and MIMO (Alamouti + MRC and other modes)
                 else
                     % Transmit diversity precoding
-                    if ismember(mode_0_to_1, [1,5,10]) == true
-                        x_PCC_rev = lib_rx.equalization_MISO_MIMO_alamouti_mrc( ...
-                            antenna_streams_mapped_rev, ch_estim, N_RX, N_eff_TX, physical_resource_mapping_PCC_cell);
-                        x_PDC_rev = lib_rx.equalization_MISO_MIMO_alamouti_mrc( ...
-                            antenna_streams_mapped_rev, ch_estim, N_RX, N_eff_TX, physical_resource_mapping_PDC_cell);
-                    end
-
+                    if ismember(mode_0_to_11, [1,5,10]) == true
+                        x_PCC_rev = lib_rx.equalization_MISO_MIMO_alamouti_mrc(antenna_streams_mapped_rev, ch_estim, N_RX, N_eff_TX, physical_resource_mapping_PCC_cell);
+                        x_PDC_rev = lib_rx.equalization_MISO_MIMO_alamouti_mrc(antenna_streams_mapped_rev, ch_estim, N_RX, N_eff_TX, physical_resource_mapping_PDC_cell);
                     % MIMO modes with more than one spatial stream
-                    error("MIMO modes with more than one spatial stream are not implemented")
-                    % TODO
+                    else
+                        error("MIMO modes with N_SS>1 not implemented yet.");
+                    end
                 end
                 
             % no equalization, a great debugging tool when using awgn channel

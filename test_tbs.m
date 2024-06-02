@@ -24,8 +24,6 @@ for packet_length_subslots = [1:16, 18:2:32]
         if packet_length_subslots == 1 && mcs_index ==0
             continue;
         end
-        packet_length_subslots=2;
-        mcs_index=10;
         %PacketLengthType: 0 for subslots, 1 for slots
         %PacketLength: min is 1, max is 16 according to Table 6.2.1-2a in part 4
         if mod(packet_length_subslots, numerology.N_SLOT_u_subslot) % need to operate in subslots
@@ -83,27 +81,28 @@ for packet_length_subslots = [1:16, 18:2:32]
         end
 
         %assert(validation_tbs(val_idx) == N_TB_bits);
-        cb_len = round(mean(cellfun(@length, c_r)));
+        cb_len = cellfun(@length, c_r)
 
-        fprintf("packet_len: %d, mcs: %d, total_bits:%d, tbs: %d, cbs: %d, codeblocks:%d \n",packet_length_subslots*5,  mcs_index, phy_4_5.n_total_bits, N_TB_bits, cb_len, N_CB);
+        fprintf("packet_len: %d, mcs: %d, total_bits:%d, tbs: %d, cbs: %d, codeblocks:%d \n",packet_length_subslots*5,  mcs_index, ...
+		phy_4_5.n_total_bits, N_TB_bits, round(mean(cb_len)), N_CB);
         val_idx = val_idx+ 1;
 
         d_turbo_tx = lteTurboEncode(c_r);
-        disp('d_turbo at TX after encoding')
-        cellfun(@length,d_turbo_tx)
+        %disp('d_turbo at TX after encoding')
+        %cellfun(@length,d_turbo_tx)
 
-        chs.Modulation = phy_4_5.mcs.modulation;
+        %chs.Modulation = phy_4_5.mcs.modulation;
 
-        f = lteRateMatchTurbo(d_turbo_tx, phy_4_5.n_total_bits, redundancy_version, chs);
-        disp('bits after rate-matching');
-        size(f)
+        %f = lteRateMatchTurbo(d_turbo_tx, phy_4_5.n_total_bits, redundancy_version, chs);
+        %disp('bits after rate-matching');
+        %size(f)
         %cbsbuffers=d_turbo_tx;
-        d_turbo = lteRateRecoverTurbo(f, N_TB_bits, redundancy_version, chs, cbsbuffers);
-        disp('d_turbo rate recovery at RX')
-        cellfun(@length,d_turbo)
-        break
+        %d_turbo = lteRateRecoverTurbo(f, N_TB_bits, redundancy_version, chs, cbsbuffers);
+        %disp('d_turbo rate recovery at RX')
+        %cellfun(@length,d_turbo)
+        %break
     end
-    break
+    %break
 end
 
 
